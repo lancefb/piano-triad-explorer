@@ -1,0 +1,77 @@
+/* Basic Page Styles */
+body {
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+    justify-content: space-between;
+}
+
+header {
+    padding: 20px;
+    text-align: right;
+}
+
+#settings-btn {
+    font-size: 1.2em;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+/* Main Content Area */
+main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Staff Container */
+.staff-container {
+    width: 80%;
+    max-width: 800px; /* Adjust as needed */
+    background-color: white;
+    padding: 40px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    /* We'll add staff lines using JS or background images later */
+    border: 2px solid #333; /* Temporary border to see it */
+    min-height: 250px; /* Temporary height */
+}
+
+/* Message Area */
+.message-area {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #e2e2e2;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 800px;
+    text-align: center;
+}
+
+#message-text {
+    font-size: 1.5em;
+    margin: 0;
+}
+
+/* --- Styles for the dynamically generated staff --- */
+.staff-container {
+    /* We'll use Flexbox to space the lines out */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.staff-line {
+    width: 100%;
+    height: 2px;
+    background-color: #333;
+}

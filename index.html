@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triads and Inversions</title>
+    <style>
+        /* Basic Reset & Body Styling */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        /* Main Container */
+        .app-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px; /* Limit max width on desktop */
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        /* Controls Section */
+        .controls {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            justify-content: space-around;
+            margin-bottom: 25px;
+            gap: 15px; /* Spacing between control groups */
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .control-group label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .control-group select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            min-width: 120px; /* Ensure decent width */
+            background-color: #fff;
+            cursor: pointer;
+        }
+
+        /* Info Display Section */
+        .info-display {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            border: 1px solid #ced4da;
+        }
+
+        .info-display p {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .info-display strong {
+           color: #343a40;
+        }
+
+        /* Keyboard Section */
+        .keyboard-container {
+            width: 100%;
+            margin: 0 auto; /* Center the keyboard */
+            overflow-x: auto; /* Allow horizontal scroll if needed on very small screens */
+            padding-bottom: 10px; /* Space for scrollbar if it appears */
+        }
+
+        .keyboard {
+            display: flex;
+            position: relative;
+            height: 180px; /* Adjust height as needed */
+            width: max-content; /* Allow keyboard to determine its own width */
+            min-width: 100%; /* Ensure it tries to fill container */
+            margin: 0 auto; /* Center within container */
+            border: 2px solid #555;
+            border-radius: 5px;
+            background-color: #333; /* Background visible between keys */
+        }
+
+        .key {
+            cursor: pointer;
+            border: 1px solid #555;
+            transition: background-color 0.1s ease;
+            display: flex;
+            align-items: flex-end; /* Position note name at bottom */
+            justify-content: center;
+            padding-bottom: 5px;
+            font-size: 0.8em;
+            position: relative; /* Needed for absolute positioning of black keys */
+        }
+
+        .key.white {
+            background-color: #ffffff;
+            width: 50px; /* Adjust width */
+            height: 100%;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+            z-index: 1; /* White keys below black keys */
+        }
+
+        .key.black {
+            background-color: #333333;
+            width: 30px; /* Adjust width */
+            height: 60%;
+            color: #ffffff;
+            position: absolute;
+            top: 0;
+            margin-left: -15px; /* Half its width to center over white key boundary */
+            z-index: 2; /* Black keys above white keys */
+            border-bottom-left-radius: 3px;
+            border-bottom-right-radius: 3px;
+        }
+
+        /* Specific positioning for black keys */
+        .key[data-note^="C#"], .key[data-note^="Db"] { margin-left: -15px; left: 50px; }
+        .key[data-note^="D#"], .key[data-note^="Eb"] { margin-left: -15px; left: 100px; }
+        .key[data-note^="F#"], .key[data-note^="Gb"] { margin-left: -15px; left: 200px; }
+        .key[data-note^="G#"], .key[data-note^="Ab"] { margin-left: -15px; left: 250px; }
+        .key[data-note^="A#"], .key[data-note^="Bb"] { margin-left: -15px; left: 300px; }
+
+        /* Adjust positions for subsequent octaves */
+        .key[data-note^="C#5"], .key[data-note^="Db5"] { left: calc(50px + 7 * 50px); }
+        .key[data-note^="D#5"], .key[data-note^="Eb5"] { left: calc(100px + 7 * 50px); }
+        .key[data-note^="F#5"], .key[data-note^="Gb5"] { left: calc(200px + 7 * 50px); }
+        .key[data-note^="G#5"], .key[data-note^="Ab5"] { left: calc(250px + 7 * 50px); }
+        .key[data-note^="A#5"], .key[data-note^="Bb5"] { left: calc(300px + 7 * 50px); }
+
+        .key:active, .key.pressed {
+            background-color: #a0a0a0; /* Visual feedback on press */
+        }
+        .key.white:active, .key.white.pressed { background-color: #d0d0d0; }
+        .key.black:active, .key.black.pressed { background-color: #666666; }
+
+        .key.highlighted {
+            background-color: #4a90e2; /* Highlight color for triad notes */
+            color: white;
+            border: 2px solid #1a5dab;
+        }
+        .key.black.highlighted {
+             background-color: #3a7bc8;
+             color: white;
+             border: 1px solid #1a5dab;
+        }
+
+         /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .key.white { width: 40px; }
+            .key.black { width: 24px; margin-left: -12px; }
+            /* Adjust black key positions based on new white key width */
+            .key[data-note^="C#"], .key[data-note^="Db"] { left: 40px; }
+            .key[data-note^="D#"], .key[data-note^="Eb"] { left: 80px; }
+            .key[data-note^="F#"], .key[data-note^="Gb"] { left: 160px; }
+            .key[data-note^="G#"], .key[data-note^="Ab"] { left: 200px; }
+            .key[data-note^="A#"], .key[data-note^="Bb"] { left: 240px; }
+            .key[data-note^="C#5"], .key[data-note^="Db5"] { left: calc(40px + 7 * 40px); }
+            .key[data-note^="D#5"], .key[data-note^="Eb5"] { left: calc(80px + 7 * 40px); }
+            .key[data-note^="F#5"], .key[data-note^="Gb5"] { left: calc(160px + 7 * 40px); }
+            .key[data-note^="G#5"], .key[data-note^="Ab5"] { left: calc(200px + 7 * 40px); }
+            .key[data-note^="A#5"], .key[data-note^="Bb5"] { left: calc(240px + 7 * 40px); }
+
+            .keyboard { height: 150px; }
+            .key.black { height: 55%; }
+            .key { font-size: 0.7em; }
+        }
+
+         @media (max-width: 500px) {
+            body { padding: 10px; }
+            .app-container { padding: 15px; }
+            h1 { font-size: 1.5em; }
+            .controls { flex-direction: column; align-items: stretch; gap: 10px; }
+            .control-group select { width: 100%; }
+
+            .key.white { width: 35px; }
+            .key.black { width: 21px; margin-left: -10.5px; }
+            /* Adjust black key positions based on new white key width */
+            .key[data-note^="C#"], .key[data-note^="Db"] { left: 35px; }
+            .key[data-note^="D#"], .key[data-note^="Eb"] { left: 70px; }
+            .key[data-note^="F#"], .key[data-note^="Gb"] { left: 140px; }
+            .key[data-note^="G#"], .key[data-note^="Ab"] { left: 175px; }
+            .key[data-note^="A#"], .key[data-note^="Bb"] { left: 210px; }
+            .key[data-note^="C#5"], .key[data-note^="Db5"] { left: calc(35px + 7 * 35px); }
+            .key[data-note^="D#5"], .key[data-note^="Eb5"] { left: calc(70px + 7 * 35px); }
+            .key[data-note^="F#5"], .key[data-note^="Gb5"] { left: calc(140px + 7 * 35px); }
+            .key[data-note^="G#5"], .key[data-note^="Ab5"] { left: calc(175px + 7 * 35px); }
+            .key[data-note^="A#5"], .key[data-note^="Bb5"] { left: calc(210px + 7 * 35px); }
+
+            .keyboard { height: 130px; }
+            .key.black { height: 50%; }
+            .key { font-size: 0.6em; padding-bottom: 3px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <h1>Triads and Inversions</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="root-select">Root Note:</label>
+                <select id="root-select">
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="G">G</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="triad-select">Triad Type:</label>
+                <select id="triad-select">
+                    <option value="Major">Major</option>
+                    <option value="Minor">Minor</option>
+                    <option value="Diminished">Diminished</option>
+                    <option value="Augmented">Augmented</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="inversion-select">Inversion:</label>
+                <select id="inversion-select">
+                    <option value="Root Position">Root Position</option>
+                    <option value="First Inversion">First Inversion</option>
+                    <option value="Second Inversion">Second Inversion</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="info-display">
+            <p><strong>Selection:</strong> <span id="selection-info">C Major, Root Position</span></p>
+            <p><strong>Formula:</strong> <span id="formula-info">Root: C, Third: Major Third (E), Fifth: Perfect Fifth (G)</span></p>
+            <p><strong>Notes:</strong> <span id="notes-info">C4, E4, G4</span></p>
+            <p id="lowest-note-info-container" style="display: none;"><strong>Lowest Note:</strong> <span id="lowest-note-info"></span></p>
+        </div>
+
+        <div class="keyboard-container">
+            <div class="keyboard" id="keyboard">
+                <!-- Keys will be generated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const keyboardDiv = document.getElementById('keyboard');
+            const rootSelect = document.getElementById('root-select');
+            const triadSelect = document.getElementById('triad-select');
+            const inversionSelect = document.getElementById('inversion-select');
+            const selectionInfo = document.getElementById('selection-info');
+            const formulaInfo = document.getElementById('formula-info');
+            const notesInfo = document.getElementById('notes-info');
+            const lowestNoteInfoContainer = document.getElementById('lowest-note-info-container');
+            const lowestNoteInfo = document.getElementById('lowest-note-info');
+
+            let audioContext; // Initialize on first interaction
+            const oscillators = {}; // Keep track of playing notes for stopping
+
+            // --- Audio Setup ---
+            function initAudioContext() {
+                if (!audioContext) {
+                    try {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        console.error("Web Audio API is not supported in this browser", e);
+                        alert("Web Audio API is not supported in this browser. Sound playback will not work.");
+                    }
+                }
+            }
+
+            function noteToFrequency(note) {
+                const noteFrequencies = {
+                    'C3': 130.81, 'C#3': 138.59, 'Db3': 138.59, 'D3': 146.83, 'D#3': 155.56, 'Eb3': 155.56, 'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'Gb3': 185.00, 'G3': 196.00, 'G#3': 207.65, 'Ab3': 207.65, 'A3': 220.00, 'A#3': 233.08, 'Bb3': 233.08, 'B3': 246.94,
+                    'C4': 261.63, 'C#4': 277.18, 'Db4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'Eb4': 311.13, 'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'Gb4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'Ab4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'Bb4': 466.16, 'B4': 493.88,
+                    'C5': 523.25, 'C#5': 554.37, 'Db5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'Eb5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'Gb5': 739.99, 'G5': 783.99, 'G#5': 830.61, 'Ab5': 830.61, 'A5': 880.00, 'A#5': 932.33, 'Bb5': 932.33, 'B5': 987.77,
+                    'C6': 1046.50
+                };
+                return noteFrequencies[note];
+            }
+
+            function playNote(note, duration = 0.6) {
+                initAudioContext(); // Ensure context is ready
+                if (!audioContext) return;
+
+                const freq = noteToFrequency(note);
+                if (!freq) {
+                    console.warn(`Frequency not found for note: ${note}`);
+                    return;
+                }
+
+                // Stop existing oscillator for this note if any
+                if (oscillators[note]) {
+                    try {
+                         oscillators[note].stop();
+                    } catch(e) { /* Ignore errors if already stopped */ }
+                    delete oscillators[note];
+                }
+
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.type = 'sine'; // 'sine', 'square', 'sawtooth', 'triangle'
+                oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime); // Start with volume
+
+                // Fade out
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration * 0.9);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.start(audioContext.currentTime);
+                oscillators[note] = oscillator; // Store reference
+
+                // Schedule stop
+                oscillator.stop(audioContext.currentTime + duration);
+                 // Clean up reference after stop
+                setTimeout(() => {
+                     if (oscillators[note] === oscillator) {
+                         delete oscillators[note];
+                     }
+                }, duration * 1000);
+            }
+
+            function playChord(notes) {
+                 initAudioContext(); // Ensure context is ready before playing
+                 if (!audioContext) return;
+                 notes.forEach(note => playNote(note, 1.0)); // Play chord notes for longer duration
+            }
+
+            // --- Music Theory Logic ---
+            const notesSharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const notesFlat = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+            // Use flats for certain keys for conventional spelling
+            const shouldUseFlats = (rootNote) => ['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb'].includes(rootNote) || rootNote.includes('b');
+
+            // Function to get note name based on index and preference for sharp/flat
+            function getNoteName(index, preferFlat = false) {
+                const noteSet = preferFlat ? notesFlat : notesSharp;
+                return noteSet[index % 12];
+            }
+
+            // Get semitone index from root (0-11)
+            function getNoteIndex(noteName) {
+                let index = notesSharp.indexOf(noteName);
+                if (index === -1) index = notesFlat.indexOf(noteName);
+                return index;
+            }
+
+            // Calculate triad notes relative to root index
+            function calculateTriadIntervals(triadType) {
+                switch (triadType) {
+                    case 'Major': return { third: 4, fifth: 7, thirdName: "Major Third", fifthName: "Perfect Fifth" };
+                    case 'Minor': return { third: 3, fifth: 7, thirdName: "Minor Third", fifthName: "Perfect Fifth" };
+                    case 'Diminished': return { third: 3, fifth: 6, thirdName: "Minor Third", fifthName: "Diminished Fifth" };
+                    case 'Augmented': return { third: 4, fifth: 8, thirdName: "Major Third", fifthName: "Augmented Fifth" };
+                    default: return { third: 4, fifth: 7, thirdName: "Major Third", fifthName: "Perfect Fifth" }; // Default to Major
+                }
+            }
+
+            // Get specific note names with octave
+            function getTriadNotes(rootNote, triadType, startOctave = 4) {
+                const rootIndex = getNoteIndex(rootNote);
+                const intervals = calculateTriadIntervals(triadType);
+                const preferFlat = shouldUseFlats(rootNote);
+
+                const rootName = getNoteName(rootIndex, preferFlat);
+                const thirdIndex = rootIndex + intervals.third;
+                const fifthIndex = rootIndex + intervals.fifth;
+
+                const thirdName = getNoteName(thirdIndex, preferFlat);
+                const fifthName = getNoteName(fifthIndex, preferFlat);
+
+                // Basic octave assignment (adjust if note wraps past B)
+                const rootOctave = startOctave;
+                const thirdOctave = thirdIndex >= 12 ? startOctave + 1 : startOctave;
+                const fifthOctave = fifthIndex >= 12 ? startOctave + 1 : startOctave;
+
+                return [
+                    { name: rootName, octave: rootOctave, note: `${rootName}${rootOctave}`, role: "Root" },
+                    { name: thirdName, octave: thirdOctave, note: `${thirdName}${thirdOctave}`, role: "Third" },
+                    { name: fifthName, octave: fifthOctave, note: `${fifthName}${fifthOctave}`, role: "Fifth" }
+                ];
+            }
+
+            function applyInversion(rootPositionNotes, inversionType) {
+                const notes = [...rootPositionNotes]; // Copy array
+                let invertedNotes = [];
+                let lowestNoteRole = "Root";
+
+                switch (inversionType) {
+                    case 'First Inversion':
+                        // Third becomes lowest note. Root moves up an octave.
+                        const root = notes[0];
+                        const third = notes[1];
+                        const fifth = notes[2];
+                        invertedNotes = [
+                            { ...third }, // Keep original third object
+                            { ...fifth }, // Keep original fifth object
+                            { ...root, octave: root.octave + 1, note: `${root.name}${root.octave + 1}` } // Root goes up
+                        ];
+                        lowestNoteRole = "Third";
+                        break;
+                    case 'Second Inversion':
+                        // Fifth becomes lowest note. Root and Third move up an octave.
+                        const root2 = notes[0];
+                        const third2 = notes[1];
+                        const fifth2 = notes[2];
+                         invertedNotes = [
+                            { ...fifth2 }, // Keep original fifth object
+                            { ...root2, octave: root2.octave + 1, note: `${root2.name}${root2.octave + 1}` }, // Root goes up
+                            { ...third2, octave: third2.octave + 1, note: `${third2.name}${third2.octave + 1}` } // Third goes up
+                        ];
+                         lowestNoteRole = "Fifth";
+                        break;
+                    case 'Root Position':
+                    default:
+                        invertedNotes = notes;
+                        lowestNoteRole = "Root";
+                        break;
+                }
+                 // Sort by frequency for consistent display/playing order if needed, though order matters for inversion definition
+                // For this app, the order defined above IS the inversion.
+                return { invertedNotes, lowestNoteRole };
+            }
+
+
+            // --- Keyboard Generation ---
+            function createKeyboard() {
+                keyboardDiv.innerHTML = ''; // Clear existing keys
+                const keys = [
+                    // Octave 4
+                    { note: 'C4', type: 'white' }, { note: 'C#4', type: 'black' }, { note: 'D4', type: 'white' }, { note: 'D#4', type: 'black' }, { note: 'E4', type: 'white' },
+                    { note: 'F4', type: 'white' }, { note: 'F#4', type: 'black' }, { note: 'G4', type: 'white' }, { note: 'G#4', type: 'black' }, { note: 'A4', type: 'white' }, { note: 'A#4', type: 'black' }, { note: 'B4', type: 'white' },
+                    // Octave 5
+                    { note: 'C5', type: 'white' }, { note: 'C#5', type: 'black' }, { note: 'D5', type: 'white' }, { note: 'D#5', type: 'black' }, { note: 'E5', type: 'white' },
+                    { note: 'F5', type: 'white' }, { note: 'F#5', type: 'black' }, { note: 'G5', type: 'white' }, { note: 'G#5', type: 'black' }, { note: 'A5', type: 'white' }, { note: 'A#5', type: 'black' }, { note: 'B5', type: 'white' },
+                     // Add C6 for range
+                    { note: 'C6', type: 'white' }
+                ];
+
+                keys.forEach(keyInfo => {
+                    const keyElement = document.createElement('div');
+                    keyElement.classList.add('key', keyInfo.type);
+                    keyElement.dataset.note = keyInfo.note;
+                    // Display note name without octave on key for simplicity, maybe add octave later if needed
+                    keyElement.textContent = keyInfo.note.slice(0, -1); // Show C, C#, D etc.
+
+                    // Add event listener for playing sound on click/touch
+                    keyElement.addEventListener('mousedown', (e) => {
+                        e.preventDefault(); // Prevent focus issues on mobile
+                        initAudioContext(); // Ensure audio context is started by user gesture
+                        playNote(keyInfo.note);
+                        keyElement.classList.add('pressed'); // Visual feedback
+                    });
+                    keyElement.addEventListener('mouseup', () => {
+                       keyElement.classList.remove('pressed');
+                    });
+                    keyElement.addEventListener('mouseleave', () => { // If mouse slides off while pressed
+                        keyElement.classList.remove('pressed');
+                    });
+                     // Touch events for mobile
+                     keyElement.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        initAudioContext();
+                        playNote(keyInfo.note);
+                        keyElement.classList.add('pressed');
+                    }, { passive: false }); // Need passive false to preventDefault
+                    keyElement.addEventListener('touchend', () => {
+                       keyElement.classList.remove('pressed');
+                    });
+
+
+                    keyboardDiv.appendChild(keyElement);
+                });
+            }
+
+            // --- Update UI ---
+            function updateDisplay() {
+                const root = rootSelect.value;
+                const type = triadSelect.value;
+                const inversion = inversionSelect.value;
+
+                // Update selection text
+                selectionInfo.textContent = `${root} ${type}, ${inversion}`;
+
+                // Calculate notes
+                const rootPositionNotes = getTriadNotes(root, type, 4); // Start at octave 4
+                const { invertedNotes, lowestNoteRole } = applyInversion(rootPositionNotes, inversion);
+                const notesToHighlight = invertedNotes.map(n => n.note);
+
+                 // Update formula text
+                const intervals = calculateTriadIntervals(type);
+                const rootPosNoteNames = rootPositionNotes.map(n => n.name);
+                formulaInfo.textContent = `Root: ${rootPosNoteNames[0]}, Third: ${intervals.thirdName} (${rootPosNoteNames[1]}), Fifth: ${intervals.fifthName} (${rootPosNoteNames[2]})`;
+
+                 // Update notes list text
+                 notesInfo.textContent = notesToHighlight.join(', ');
+
+                 // Update lowest note info
+                 if (inversion !== 'Root Position') {
+                    lowestNoteInfo.textContent = `${lowestNoteRole} (${invertedNotes[0].note})`;
+                    lowestNoteInfoContainer.style.display = 'block';
+                } else {
+                    lowestNoteInfoContainer.style.display = 'none';
+                }
+
+                // Highlight keys
+                highlightKeys(notesToHighlight);
+
+                // Play the chord
+                playChord(notesToHighlight);
+            }
+
+            function highlightKeys(notesToHighlight) {
+                // Clear previous highlights
+                document.querySelectorAll('.key.highlighted').forEach(key => {
+                    key.classList.remove('highlighted');
+                });
+
+                // Add new highlights
+                notesToHighlight.forEach(noteName => {
+                    // Handle enharmonics (e.g., C# and Db) - find either
+                    const sharpEquivalent = noteName.replace('b', '#');
+                    const flatEquivalent = noteName.replace('#', 'b');
+
+                    const keyElement = keyboardDiv.querySelector(`.key[data-note="${noteName}"]`) ||
+                                       keyboardDiv.querySelector(`.key[data-note="${sharpEquivalent}"]`) ||
+                                       keyboardDiv.querySelector(`.key[data-note="${flatEquivalent}"]`);
+
+                    if (keyElement) {
+                        keyElement.classList.add('highlighted');
+                    } else {
+                        console.warn(`Key element not found for note: ${noteName}`);
+                    }
+                });
+            }
+
+            // --- Event Listeners ---
+            rootSelect.addEventListener('change', updateDisplay);
+            triadSelect.addEventListener('change', updateDisplay);
+            inversionSelect.addEventListener('change', updateDisplay);
+
+            // --- Initial Setup ---
+            createKeyboard();
+            updateDisplay(); // Initial display based on default values
+
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Note Reader</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="settings">
+            <button id="settings-btn">⚙️ Settings</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- NEW: The Start Screen -->
+        <div id="start-screen">
+            <button id="connect-btn">Connect to Keyboard</button>
+        </div>
+
+        <!-- The Staff will now be hidden initially -->
+        <div class="staff-container" style="display: none;">
+            <!-- The musical staff will be generated here by JavaScript -->
+        </div>
+
+        <div class="message-area">
+            <p id="message-text">Welcome! Click the button to connect.</p>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
