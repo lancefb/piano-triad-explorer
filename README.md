@@ -1,4 +1,4 @@
-# Piano Learning Tools
+# Piano Triad Explorer
 
 Interactive web-based tools to help learn piano at any age. Features chord visualization, inversion exploration, and practice utilities.
 
