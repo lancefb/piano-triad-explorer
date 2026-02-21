@@ -11,7 +11,7 @@ Interactive web-based tools to help learn piano at any age. Features chord visua
 
 ## Usage
 
-Open `index.html` in a web browser to use the tools. NOTE: 1> you need to connect a MIDI keyboard to use this, and 2> it needs more work.
+Open `index.html` in a web browser to use the tool. Simple!
 
 ## About
 
